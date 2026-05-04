@@ -28,20 +28,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@SpringBootTest
-@ActiveProfiles("test")
-class KafkaInfrastructureIT {
+class KafkaInfrastructureIT extends BaseKafkaIT {
 
     @MockitoBean
-    private TelegramService telegramService;
-    @MockitoBean
-    private GmailService gmailService;
-    @MockitoBean
-    private DiscordService discordService;
-    @MockitoBean
     private NotificationService notificationService;
-    @MockitoBean
-    private LocalStorageService storageService;
 
     private static final String TOPIC_SUFFIX = String.valueOf(System.currentTimeMillis());
     public static final String INFRA_TOPIC = "infra-test-topic-" + TOPIC_SUFFIX;
