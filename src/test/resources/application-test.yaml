@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+
+jwt:
+  secret: test-secret-key-must-be-at-least-32-characters-long-for-hmac
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
+
+file:
+  upload-dir: ./test-uploads
+
+mcp:
+  enabled: true
+  github:
+    enabled: ${MCP_GITHUB_ENABLED:false}
+    token: ${GITHUB_TOKEN:test-placeholder}
+    base-url: https://api.github.com

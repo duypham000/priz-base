@@ -1,0 +1,55 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: base
+  profiles:
+    active: local # Default to local profile for development
+  
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  grpc:
+    server:
+      port: ${GRPC_SERVER_PORT:9091}
+      keep-alive-time: 30s
+      keep-alive-timeout: 10s
+      max-inbound-message-size: 4MB
+      reflection:
+        enabled: ${GRPC_REFLECTION_ENABLED:true}
+    client:
+      channels:
+        agent-service:
+          address: ${AGENT_SERVICE_ADDRESS:static://localhost:9292}
+          negotiation-type: ${GRPC_NEGOTIATION:PLAINTEXT}
+          max-inbound-message-size: 4MB
+          keep-alive-time: 30s
+          keep-alive-timeout: 10s
+          keep-alive-without-calls: true
+          default-load-balancing-policy: round_robin
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+jwt:
+  access-token-expiration: 3600000    # 1 hour in ms
+  refresh-token-expiration: 604800000 # 7 days in ms
+
+file:
+  upload-dir: ${UPLOAD_DIR:./uploads}
+  max-size: 52428800  # 50MB in bytes

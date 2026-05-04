@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+mcp:
+  enabled: true
+  github:
+    enabled: ${MCP_GITHUB_ENABLED:true}
+    token: ${GITHUB_TOKEN}
+    base-url: https://api.github.com
+
+telegram:
+  enabled: ${TELEGRAM_ENABLED:true}
+  bot-token: ${TELEGRAM_BOT_TOKEN}
+  channel-id: ${TELEGRAM_CHANNEL_ID}
+  base-url: https://api.telegram.org
+
+logstash:
+  host: ${LOGSTASH_HOST:localhost}
+  port: ${LOGSTASH_PORT:5044}
+
+logging:
+  level:
+    root: INFO
+    com.priz.base: INFO

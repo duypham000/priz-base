@@ -1,0 +1,18 @@
+filebeat.inputs:
+- type: filestream
+  id: priz-base-logs
+  enabled: true
+  paths:
+    - /usr/share/filebeat/logs/*.json
+  parsers:
+    - ndjson:
+        target: ""
+        add_error_key: true
+        overwrite_keys: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true

@@ -1,0 +1,10 @@
+{
+  "analysis": {
+    "analyzer": {
+      "vi_standard": {
+        "type": "standard",
+        "stopwords": "_none_"
+      }
+    }
+  }
+}

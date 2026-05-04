@@ -1,0 +1,23 @@
+{
+  "index_patterns": ["logs-priz-base-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp":           { "type": "date" },
+        "message":              { "type": "text", "analyzer": "standard" },
+        "log.level":            { "type": "keyword" },
+        "log.logger":           { "type": "keyword" },
+        "userId":               { "type": "keyword" },
+        "traceId":              { "type": "keyword" },
+        "http_method":          { "type": "keyword" },
+        "request_path":         { "type": "keyword" },
+        "service.name":         { "type": "keyword" },
+        "process.thread.name":  { "type": "keyword" }
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+
+# --- Build Tools ---
+target/
+build/
+out/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# --- IDE: IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# --- IDE: VS Code ---
+.vscode/
+
+# --- IDE: Eclipse ---
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# --- IDE: NetBeans ---
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.*.local
+*.properties.local
+src/main/resources/application-local.yaml
+src/main/resources/application-local.yml
+src/main/resources/application-local.properties
+
+# --- Application Data & Logs ---
+/logs/
+*.log
+etmpbase-app.log
+/uploads/
+/test-uploads/
+/scratch/
+
+# --- AI Tools ---
+.claude/
+CLAUDE.md.tmp
