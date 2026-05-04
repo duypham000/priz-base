@@ -32,6 +32,14 @@ telegram:
   channel-id: ${TELEGRAM_CHANNEL_ID}
   base-url: https://api.telegram.org
 
+gmail:
+  enabled: ${GMAIL_ENABLED:true}
+  username: ${GMAIL_USERNAME}
+  app-password: ${GMAIL_APP_PASSWORD}
+
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
 logstash:
   host: ${LOGSTASH_HOST:localhost}
   port: ${LOGSTASH_PORT:5044}

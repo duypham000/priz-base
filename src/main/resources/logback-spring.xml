@@ -8,6 +8,8 @@
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <includeMdcKeyName>userId</includeMdcKeyName>
                 <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>kafkaPartition</includeMdcKeyName>
+                <includeMdcKeyName>kafkaOffset</includeMdcKeyName>
             </encoder>
         </appender>
     </springProfile>
@@ -23,6 +25,8 @@
             <customFields>{"app":"priz-base"}</customFields>
             <includeMdcKeyName>userId</includeMdcKeyName>
             <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>kafkaPartition</includeMdcKeyName>
+            <includeMdcKeyName>kafkaOffset</includeMdcKeyName>
         </encoder>
     </appender>
 

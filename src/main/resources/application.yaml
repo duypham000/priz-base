@@ -31,15 +31,6 @@ spring:
           keep-alive-without-calls: true
           default-load-balancing-policy: round_robin
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
-
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -53,3 +44,24 @@ jwt:
 file:
   upload-dir: ${UPLOAD_DIR:./uploads}
   max-size: 52428800  # 50MB in bytes
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  kafka:
+    topics:
+      file-upload: file-upload-events
+      file-upload-dlt: file-upload-events.DLT
+      notification: notification-events
+      notification-dlt: notification-events.DLT
+    partitions:
+      file-upload: 3
+      notification: 3
+    replicas: 1

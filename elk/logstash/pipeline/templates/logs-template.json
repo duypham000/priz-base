@@ -13,6 +13,8 @@
         "log.logger":           { "type": "keyword" },
         "userId":               { "type": "keyword" },
         "traceId":              { "type": "keyword" },
+        "kafkaPartition":       { "type": "integer" },
+        "kafkaOffset":          { "type": "long" },
         "http_method":          { "type": "keyword" },
         "request_path":         { "type": "keyword" },
         "service.name":         { "type": "keyword" },

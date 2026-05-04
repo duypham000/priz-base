@@ -1,9 +1,12 @@
 package com.priz.base.interfaces.rest;
 
+import com.priz.base.application.features.files.AsyncFileUploadService;
 import com.priz.base.application.features.files.FileService;
+import com.priz.base.application.features.files.dto.AsyncUploadResponse;
 import com.priz.base.application.features.files.dto.FileDetailResponse;
 import com.priz.base.application.features.files.dto.FileFilterRequest;
 import com.priz.base.application.features.files.dto.FileSyncRequest;
+import com.priz.base.application.features.files.dto.UploadJobStatusResponse;
 import com.priz.base.common.response.ApiResponse;
 import com.priz.interfaces.admin.dto.PageResponse;
 import com.priz.common.security.annotation.Secured;
@@ -27,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     private final FileService fileService;
+    private final AsyncFileUploadService asyncFileUploadService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload a file")
@@ -80,5 +84,22 @@ public class FileController {
             @Valid @RequestBody FileSyncRequest request) {
         fileService.syncFiles(request);
         return ResponseEntity.ok(ApiResponse.success("Files synced successfully", null));
+    }
+
+    @PostMapping(value = "/upload-async", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload file async — queued to Kafka, then pushed to Telegram")
+    public ResponseEntity<ApiResponse<AsyncUploadResponse>> uploadAsync(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "description", required = false) String description) {
+        AsyncUploadResponse response = asyncFileUploadService.initiateUpload(file, description);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.created(response));
+    }
+
+    @GetMapping("/jobs/{jobId}")
+    @Operation(summary = "Poll async upload job status")
+    public ResponseEntity<ApiResponse<UploadJobStatusResponse>> getJobStatus(
+            @PathVariable String jobId) {
+        UploadJobStatusResponse response = asyncFileUploadService.getJobStatus(jobId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
