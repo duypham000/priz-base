@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.priz.base.application.integration.discord.DiscordService;
 import com.priz.base.application.integration.discord.dto.DiscordEmbed;
 import com.priz.base.application.integration.discord.dto.DiscordMessageResult;
+import com.priz.base.config.discord.DiscordProperties;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -15,16 +19,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Live integration test — gọi thẳng Discord Bot API với credentials thật.
- * Không cần Spring context.
+ * Sử dụng Spring context để load cấu hình từ profile.
  *
  * Chạy: mvnw.cmd test -Dtest=DiscordServiceImplIT
  */
+@SpringBootTest
+@ActiveProfiles("local")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class DiscordServiceImplIT {
 
-    private static final String BOT_TOKEN  = System.getenv("DISCORD_BOT_TOKEN");
-    private static final String CHANNEL_ID = System.getenv("DISCORD_CHANNEL_ID");
-    private static final String BASE_URL   = "https://discord.com/api/v10";
+    @Autowired
+    private DiscordProperties properties;
 
     private static DiscordService service;
 
@@ -33,14 +38,14 @@ class DiscordServiceImplIT {
     private static String uploadedMessageId;
     private static String uploadedCdnUrl;
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void setUp() {
         RestClient apiClient = RestClient.builder()
-                .baseUrl(BASE_URL)
-                .defaultHeader("Authorization", "Bot " + BOT_TOKEN)
+                .baseUrl(properties.getBaseUrl())
+                .defaultHeader("Authorization", "Bot " + properties.getBotToken())
                 .build();
         RestClient cdnClient = RestClient.builder().build();
-        service = new DiscordServiceImpl(apiClient, cdnClient, CHANNEL_ID, new ObjectMapper());
+        service = new DiscordServiceImpl(apiClient, cdnClient, properties.getChannelId(), new ObjectMapper());
     }
 
     // -------------------------------------------------------------------------

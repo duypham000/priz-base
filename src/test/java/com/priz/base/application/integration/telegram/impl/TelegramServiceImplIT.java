@@ -3,25 +3,30 @@ package com.priz.base.application.integration.telegram.impl;
 import com.priz.base.application.integration.telegram.TelegramService;
 import com.priz.base.application.integration.telegram.dto.TelegramFileInfo;
 import com.priz.base.application.integration.telegram.dto.TelegramUploadResult;
+import com.priz.base.config.telegram.TelegramProperties;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Live integration test — gọi thẳng Telegram Bot API với credentials thật.
- * Không cần Spring context.
+ * Sử dụng Spring context để load cấu hình từ profile.
  *
  * Chạy: mvnw.cmd test -Dtest=TelegramServiceImplIT
  */
+@SpringBootTest
+@ActiveProfiles("local")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TelegramServiceImplIT {
 
-    private static final String BOT_TOKEN   = "8685180644:AAGNhKB5haf3A5hYnZtyxT8SwwvGiD5-C-g";
-    private static final String CHANNEL_ID  = "-1003874772181";
-    private static final String BASE_URL    = "https://api.telegram.org";
+    @Autowired
+    private TelegramProperties properties;
 
     private static TelegramService service;
 
@@ -29,13 +34,16 @@ class TelegramServiceImplIT {
     private static long   uploadedMessageId;
     private static String uploadedFileId;
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void setUp() {
+        String botToken = properties.getBotToken();
+        String baseUrl = properties.getBaseUrl();
+        
         RestClient restClient = RestClient.builder()
-                .baseUrl(BASE_URL + "/bot" + BOT_TOKEN)
+                .baseUrl(baseUrl + "/bot" + botToken)
                 .build();
-        String fileDownloadBaseUrl = BASE_URL + "/file/bot" + BOT_TOKEN;
-        service = new TelegramServiceImpl(restClient, CHANNEL_ID, fileDownloadBaseUrl);
+        String fileDownloadBaseUrl = baseUrl + "/file/bot" + botToken;
+        service = new TelegramServiceImpl(restClient, properties.getChannelId(), fileDownloadBaseUrl);
     }
 
     // -------------------------------------------------------------------------
