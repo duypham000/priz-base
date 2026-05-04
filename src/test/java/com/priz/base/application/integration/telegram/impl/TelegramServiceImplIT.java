@@ -6,6 +6,7 @@ import com.priz.base.application.integration.telegram.dto.TelegramUploadResult;
 import com.priz.base.config.telegram.TelegramProperties;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
@@ -20,8 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Chạy: mvnw.cmd test -Dtest=TelegramServiceImplIT
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.grpc.server.port=0")
 @ActiveProfiles("local")
+@EnableConfigurationProperties(TelegramProperties.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TelegramServiceImplIT {
 

@@ -7,6 +7,7 @@ import com.priz.base.application.integration.discord.dto.DiscordMessageResult;
 import com.priz.base.config.discord.DiscordProperties;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
@@ -23,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Chạy: mvnw.cmd test -Dtest=DiscordServiceImplIT
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.grpc.server.port=0")
 @ActiveProfiles("local")
+@EnableConfigurationProperties(DiscordProperties.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class DiscordServiceImplIT {
 
@@ -74,7 +76,7 @@ class DiscordServiceImplIT {
 
         assertThat(result).isNotNull();
         assertThat(result.getMessageId()).isNotBlank();
-        assertThat(result.getChannelId()).isEqualTo(CHANNEL_ID);
+        assertThat(result.getChannelId()).isEqualTo(properties.getChannelId());
 
         textMessageId = result.getMessageId();
         System.out.printf("[OK] sendMessage → messageId=%s%n", result.getMessageId());
