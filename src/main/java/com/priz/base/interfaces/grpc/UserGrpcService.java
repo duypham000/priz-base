@@ -1,7 +1,7 @@
 package com.priz.base.interfaces.grpc;
 
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
-import com.priz.base.domain.mysql.priz_base.repository.UserRepository;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.repository.UserRepository;
 import com.priz.interfaces.user.GetUserContextRequest;
 import com.priz.interfaces.user.GetUserRequest;
 import com.priz.interfaces.user.ListActiveUsersRequest;

@@ -1,12 +1,8 @@
 package com.priz.base.interfaces.rest;
 
-import com.priz.base.application.features.files.AsyncFileUploadService;
+import com.priz.base.application.features.files.FileSearchService;
 import com.priz.base.application.features.files.FileService;
-import com.priz.base.application.features.files.dto.AsyncUploadResponse;
-import com.priz.base.application.features.files.dto.FileDetailResponse;
-import com.priz.base.application.features.files.dto.FileFilterRequest;
-import com.priz.base.application.features.files.dto.FileSyncRequest;
-import com.priz.base.application.features.files.dto.UploadJobStatusResponse;
+import com.priz.base.application.features.files.dto.*;
 import com.priz.base.common.response.ApiResponse;
 import com.priz.interfaces.admin.dto.PageResponse;
 import com.priz.common.security.annotation.Secured;
@@ -30,16 +26,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     private final FileService fileService;
-    private final AsyncFileUploadService asyncFileUploadService;
+    private final FileSearchService fileSearchService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload a file")
-    public ResponseEntity<ApiResponse<FileDetailResponse>> upload(
+    @Operation(summary = "Upload a file (Async)")
+    public ResponseEntity<ApiResponse<AsyncUploadResponse>> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "description", required = false) String description) {
-        FileDetailResponse response = fileService.upload(file, description);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created(response));
+        AsyncUploadResponse response = fileService.upload(file, description);
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(ApiResponse.accepted(response));
     }
 
     @GetMapping("/{id}/download")
@@ -64,7 +60,7 @@ public class FileController {
     }
 
     @PostMapping("/filter")
-    @Operation(summary = "Get file list with pagination and filtering")
+    @Operation(summary = "Get file list with pagination and filtering (MySQL)")
     public ResponseEntity<ApiResponse<PageResponse<FileDetailResponse>>> getFileList(
             @Valid @RequestBody FileFilterRequest filter) {
         PageResponse<FileDetailResponse> response = fileService.getFileList(filter);
@@ -75,31 +71,40 @@ public class FileController {
     @Operation(summary = "Delete a file")
     public ResponseEntity<ApiResponse<Void>> deleteFile(@PathVariable String id) {
         fileService.deleteFile(id);
-        return ResponseEntity.ok(ApiResponse.success("File deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("File deletion initiated", null));
     }
 
     @PostMapping("/sync")
-    @Operation(summary = "Sync files detail from source to database")
-    public ResponseEntity<ApiResponse<Void>> syncFiles(
+    @Operation(summary = "Sync files from remote source (Async)")
+    public ResponseEntity<ApiResponse<java.util.List<AsyncUploadResponse>>> syncFiles(
             @Valid @RequestBody FileSyncRequest request) {
-        fileService.syncFiles(request);
-        return ResponseEntity.ok(ApiResponse.success("Files synced successfully", null));
+        java.util.List<AsyncUploadResponse> response = fileService.syncFiles(request);
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(ApiResponse.accepted(response));
     }
 
-    @PostMapping(value = "/upload-async", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload file async — queued to Kafka, then pushed to Telegram")
-    public ResponseEntity<ApiResponse<AsyncUploadResponse>> uploadAsync(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description) {
-        AsyncUploadResponse response = asyncFileUploadService.initiateUpload(file, description);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.created(response));
+    @PutMapping("/{id}")
+    @Operation(summary = "Update file metadata and content")
+    public ResponseEntity<ApiResponse<Void>> updateFile(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateFileRequest request) {
+        fileService.updateFile(id, request);
+        return ResponseEntity.ok(ApiResponse.success("File update initiated", null));
+    }
+
+    @PostMapping("/search")
+    @Operation(summary = "Search files using Elasticsearch (txt/md content)")
+    public ResponseEntity<ApiResponse<PageResponse<FileDetailResponse>>> search(
+            @Valid @RequestBody FileSearchRequest request) {
+        PageResponse<FileDetailResponse> response = fileSearchService.search(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/jobs/{jobId}")
     @Operation(summary = "Poll async upload job status")
     public ResponseEntity<ApiResponse<UploadJobStatusResponse>> getJobStatus(
             @PathVariable String jobId) {
-        UploadJobStatusResponse response = asyncFileUploadService.getJobStatus(jobId);
+        UploadJobStatusResponse response = fileService.getJobStatus(jobId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

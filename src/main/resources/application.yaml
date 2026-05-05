@@ -58,10 +58,10 @@ app:
   kafka:
     topics:
       file-upload: file-upload-events
-      file-upload-dlt: file-upload-events.DLT
       notification: notification-events
-      notification-dlt: notification-events.DLT
+      file-process: file-process-events
     partitions:
       file-upload: 3
       notification: 3
+      file-process: 3
     replicas: 1

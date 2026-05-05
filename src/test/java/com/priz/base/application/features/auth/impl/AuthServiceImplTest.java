@@ -5,10 +5,12 @@ import com.priz.common.exception.BusinessException;
 import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.common.exception.UnauthorizedException;
 import com.priz.common.security.jwt.JwtService;
-import com.priz.base.domain.mysql.priz_base.model.RefreshTokenModel;
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
-import com.priz.base.domain.mysql.priz_base.repository.RefreshTokenRepository;
-import com.priz.base.domain.mysql.priz_base.repository.UserRepository;
+import com.priz.base.domain.mysql_priz_base.model.RefreshTokenModel;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.model.AccessTokenModel;
+import com.priz.base.domain.mysql_priz_base.repository.RefreshTokenRepository;
+import com.priz.base.domain.mysql_priz_base.repository.UserRepository;
+import com.priz.base.domain.mysql_priz_base.repository.AccessTokenRepository;
 import com.priz.base.testutil.TestFixtures;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,9 @@ class AuthServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AccessTokenRepository accessTokenRepository;
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;

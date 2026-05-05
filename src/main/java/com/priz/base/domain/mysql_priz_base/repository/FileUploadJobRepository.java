@@ -1,6 +1,6 @@
-package com.priz.base.domain.mysql.priz_base.repository;
+package com.priz.base.domain.mysql_priz_base.repository;
 
-import com.priz.base.domain.mysql.priz_base.model.FileUploadJobModel;
+import com.priz.base.domain.mysql_priz_base.model.FileUploadJobModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

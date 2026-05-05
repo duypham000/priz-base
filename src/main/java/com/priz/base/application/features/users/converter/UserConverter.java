@@ -1,7 +1,7 @@
 package com.priz.base.application.features.users.converter;
 
 import com.priz.base.application.features.users.dto.UserDetailResponse;
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
 
 public final class UserConverter {
 

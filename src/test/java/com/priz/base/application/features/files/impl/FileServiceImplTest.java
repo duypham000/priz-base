@@ -1,15 +1,16 @@
 package com.priz.base.application.features.files.impl;
 
-import com.priz.base.application.features.files.dto.FileDetailResponse;
-import com.priz.base.application.features.files.dto.FileFilterRequest;
-import com.priz.base.application.features.files.dto.FileSyncRequest;
+import com.priz.base.application.features.files.dto.*;
+import com.priz.base.application.features.files.dto.AsyncUploadResponse;
+import com.priz.base.domain.mysql_priz_base.repository.FileUploadJobRepository;
+import com.priz.base.infrastructure.kafka.producer.FileProcessEventProducer;
 import com.priz.common.exception.ForbiddenException;
 import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.interfaces.admin.dto.PageRequestDto;
 import com.priz.interfaces.admin.dto.PageResponse;
 import com.priz.base.common.storage.LocalStorageService;
-import com.priz.base.domain.mysql.priz_base.model.FileModel;
-import com.priz.base.domain.mysql.priz_base.repository.FileRepository;
+import com.priz.base.domain.mysql_priz_base.model.FileModel;
+import com.priz.base.domain.mysql_priz_base.repository.FileRepository;
 import com.priz.base.testutil.SecurityTestUtil;
 import com.priz.base.testutil.TestFixtures;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +41,12 @@ class FileServiceImplTest {
 
     @Mock
     private FileRepository fileRepository;
+
+    @Mock
+    private FileUploadJobRepository jobRepository;
+
+    @Mock
+    private FileProcessEventProducer fileProcessEventProducer;
 
     @Mock
     private LocalStorageService storageService;
@@ -78,12 +85,14 @@ class FileServiceImplTest {
 
         FileModel savedFile = TestFixtures.createFileModel(TestFixtures.TEST_USER_ID);
         when(fileRepository.save(any(FileModel.class))).thenReturn(savedFile);
+        when(jobRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        FileDetailResponse response = fileService.upload(multipartFile, "Test description");
+        AsyncUploadResponse response = fileService.upload(multipartFile, "Test description");
 
         assertNotNull(response);
         verify(storageService).store(multipartFile);
         verify(fileRepository).save(any(FileModel.class));
+        verify(fileProcessEventProducer).publish(any());
     }
 
     @Test
@@ -92,16 +101,23 @@ class FileServiceImplTest {
         when(multipartFile.getOriginalFilename()).thenReturn("readme");
         when(multipartFile.getSize()).thenReturn(512L);
         when(multipartFile.getContentType()).thenReturn("text/plain");
+        try {
+            lenient().when(multipartFile.getBytes()).thenReturn("file content".getBytes());
+        } catch (java.io.IOException e) {
+            // Should not happen
+        }
 
         when(storageService.store(multipartFile)).thenReturn("stored-uuid");
         when(storageService.getRootLocation()).thenReturn(Path.of("/test-uploads"));
 
         FileModel savedFile = TestFixtures.createFileModel(TestFixtures.TEST_USER_ID);
         when(fileRepository.save(any(FileModel.class))).thenReturn(savedFile);
+        when(jobRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        FileDetailResponse response = fileService.upload(multipartFile, null);
+        AsyncUploadResponse response = fileService.upload(multipartFile, null);
 
         assertNotNull(response);
+        verify(fileProcessEventProducer).publish(any());
     }
 
     // =============================================
@@ -229,10 +245,14 @@ class FileServiceImplTest {
                 .build();
 
         when(fileRepository.save(any(FileModel.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(jobRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        fileService.syncFiles(request);
+        List<AsyncUploadResponse> responses = fileService.syncFiles(request);
 
+        assertNotNull(responses);
+        assertEquals(2, responses.size());
         verify(fileRepository, times(2)).save(any(FileModel.class));
+        verify(fileProcessEventProducer, times(2)).publish(any());
     }
 
     // =============================================

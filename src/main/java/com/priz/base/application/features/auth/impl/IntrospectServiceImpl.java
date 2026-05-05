@@ -2,10 +2,10 @@ package com.priz.base.application.features.auth.impl;
 
 import com.priz.base.application.features.auth.IntrospectService;
 import com.priz.base.application.features.auth.dto.IntrospectResult;
-import com.priz.base.domain.mysql.priz_base.model.AccessTokenModel;
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
-import com.priz.base.domain.mysql.priz_base.repository.AccessTokenRepository;
-import com.priz.base.domain.mysql.priz_base.repository.UserRepository;
+import com.priz.base.domain.mysql_priz_base.model.AccessTokenModel;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.repository.AccessTokenRepository;
+import com.priz.base.domain.mysql_priz_base.repository.UserRepository;
 import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.common.exception.UnauthorizedException;
 import com.priz.common.exception.ForbiddenException;

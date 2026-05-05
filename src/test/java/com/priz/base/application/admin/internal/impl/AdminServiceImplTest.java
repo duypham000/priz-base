@@ -10,7 +10,7 @@ import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.base.common.model.BaseModel;
 import com.priz.interfaces.admin.dto.PageRequestDto;
 import com.priz.interfaces.admin.dto.PageResponse;
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

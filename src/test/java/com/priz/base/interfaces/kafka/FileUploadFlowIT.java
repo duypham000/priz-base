@@ -1,21 +1,18 @@
 package com.priz.base.interfaces.kafka;
 
-import com.priz.base.application.features.files.AsyncFileUploadService;
+import com.priz.base.application.features.files.FileService;
 import com.priz.base.application.features.files.dto.AsyncUploadResponse;
 import com.priz.base.application.integration.telegram.TelegramService;
 import com.priz.base.application.integration.telegram.dto.TelegramUploadResult;
 import com.priz.base.common.storage.LocalStorageService;
-import com.priz.base.domain.mysql.priz_base.model.FileUploadJobModel;
-import com.priz.base.domain.mysql.priz_base.repository.FileUploadJobRepository;
+import com.priz.base.domain.mysql_priz_base.model.FileUploadJobModel;
+import com.priz.base.domain.mysql_priz_base.repository.FileUploadJobRepository;
 import com.priz.common.security.SecurityContext;
 import com.priz.common.security.SecurityContextHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +30,7 @@ import static org.mockito.Mockito.when;
 class FileUploadFlowIT extends BaseKafkaIT {
 
     @Autowired
-    private AsyncFileUploadService fileUploadService;
+    private FileService fileService;
 
     @Autowired
     private FileUploadJobRepository jobRepository;
@@ -71,7 +68,7 @@ class FileUploadFlowIT extends BaseKafkaIT {
                 .thenReturn(mockResult);
 
         // Act
-        AsyncUploadResponse response = fileUploadService.initiateUpload(file, "Test upload");
+        AsyncUploadResponse response = fileService.upload(file, "Test upload");
         String jobId = response.getJobId();
 
         // Assert

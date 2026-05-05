@@ -1,7 +1,7 @@
 package com.priz.base.infrastructure.config;
 
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
-import com.priz.base.domain.mysql.priz_base.repository.UserRepository;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

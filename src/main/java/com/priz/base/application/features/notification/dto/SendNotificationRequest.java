@@ -1,6 +1,6 @@
 package com.priz.base.application.features.notification.dto;
 
-import com.priz.base.domain.mysql.priz_base.model.NotificationModel;
+import com.priz.base.domain.mysql_priz_base.model.NotificationModel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

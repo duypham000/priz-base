@@ -1,4 +1,4 @@
-package com.priz.base.domain.mysql.priz_base.model;
+package com.priz.base.domain.mysql_priz_base.model;
 
 import com.priz.common.admin.annotation.AdminHidden;
 import com.priz.common.admin.annotation.AdminManaged;

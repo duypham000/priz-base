@@ -1,7 +1,7 @@
 package com.priz.base.application.features.files.helper;
 
 import com.priz.base.application.features.files.dto.FileFilterRequest;
-import com.priz.base.domain.mysql.priz_base.model.FileModel;
+import com.priz.base.domain.mysql_priz_base.model.FileModel;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

@@ -1,7 +1,7 @@
 package com.priz.base.application.features.notes.converter;
 
 import com.priz.base.domain.elasticsearch.note.document.NoteDocument;
-import com.priz.base.domain.mysql.priz_base.model.FileModel;
+import com.priz.base.domain.mysql_priz_base.model.FileModel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

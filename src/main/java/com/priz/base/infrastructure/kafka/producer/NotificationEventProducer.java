@@ -2,8 +2,7 @@ package com.priz.base.infrastructure.kafka.producer;
 
 import com.priz.base.application.features.notification.event.NotificationEvent;
 import com.priz.base.config.kafka.KafkaTopicProperties;
-import com.priz.base.domain.mysql.priz_base.model.NotificationModel;
-import lombok.RequiredArgsConstructor;
+import com.priz.base.domain.mysql_priz_base.model.NotificationModel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -16,13 +15,17 @@ import java.time.Instant;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class NotificationEventProducer {
 
-    @Qualifier("kafkaTemplate")
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
     private final KafkaTopicProperties topicProperties;
+
+    public NotificationEventProducer(
+            @Qualifier("kafkaTemplate") KafkaTemplate<String, Object> kafkaTemplate,
+            KafkaTopicProperties topicProperties) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.topicProperties = topicProperties;
+    }
 
     public void publish(NotificationEvent event) {
         String topic = topicProperties.getTopic("notification");

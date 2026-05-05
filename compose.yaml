@@ -35,19 +35,113 @@ services:
       retries: 5
       start_period: 15s
 
-  # ── Kafka UI ──────────────────────────────────────────────────────────────────
-  kafka-ui:
-    image: ghcr.io/kafbat/kafka-ui:latest
-    container_name: priz-kafka-ui
+  # ── Schema Registry ──────────────────────────────────────────────────────────
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.9.0
+    container_name: priz-schema-registry
     ports:
-      - "8091:8080"   # http://localhost:8091
+      - "8081:8081"
     environment:
-      KAFKA_CLUSTERS_0_NAME: priz-local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      DYNAMIC_CONFIG_ENABLED: "true"
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ── Kafka Connect ─────────────────────────────────────────────────────────────
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.9.0
+    container_name: priz-kafka-connect
+    ports:
+      - "8084:8083"   # 8083 đã dùng cho Spring Boot REST
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_GROUP_ID: priz-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: priz-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: priz-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: priz-connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+
+  # ── ksqlDB Server ─────────────────────────────────────────────────────────────
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:7.9.0
+    container_name: priz-ksqldb
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: kafka:29092
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+
+  # ── ksqlDB CLI ────────────────────────────────────────────────────────────────
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:7.9.0
+    container_name: priz-ksqldb-cli
+    depends_on:
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+
+  # ── Conduktor DB (PostgreSQL metadata store) ──────────────────────────────────
+  conduktor-db:
+    image: postgres:16
+    container_name: priz-conduktor-db
+    environment:
+      POSTGRES_DB: conduktor_db
+      POSTGRES_USER: conduktor
+      POSTGRES_PASSWORD: conduktorpass
+    volumes:
+      - conduktor_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conduktor -d conduktor_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Conduktor Console (thay kafka-ui) ─────────────────────────────────────────
+  conduktor-console:
+    image: conduktor/conduktor-console:1.28.0
+    container_name: priz-conduktor
+    ports:
+      - "8091:8080"   # http://localhost:8091 — login: admin@priz.local / adminadmin
+    environment:
+      CDK_ORGANIZATION_NAME: priz-local
+      CDK_ADMIN_EMAIL: admin@priz.local
+      CDK_ADMIN_PASSWORD: adminadmin
+      CDK_DATABASE_URL: "postgresql://conduktor:conduktorpass@conduktor-db:5432/conduktor_db"
+      CDK_CLUSTERS_0_ID: priz-local
+      CDK_CLUSTERS_0_NAME: priz-local
+      CDK_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      CDK_CLUSTERS_0_SCHEMAREGISTRY_URL: http://schema-registry:8081
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: priz-connect
+      CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: http://kafka-connect:8083
+    depends_on:
+      kafka:
+        condition: service_healthy
+      conduktor-db:
+        condition: service_healthy
 
   # ── Elasticsearch ─────────────────────────────────────────────────────────────
   elasticsearch:
@@ -110,3 +204,4 @@ services:
 volumes:
   kafka_data:
   esdata_v7:
+  conduktor_db_data:

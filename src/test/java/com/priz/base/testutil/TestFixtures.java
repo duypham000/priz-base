@@ -2,9 +2,9 @@ package com.priz.base.testutil;
 
 import com.priz.base.application.features.auth.dto.LoginRequest;
 import com.priz.base.application.features.auth.dto.RegisterRequest;
-import com.priz.base.domain.mysql.priz_base.model.FileModel;
-import com.priz.base.domain.mysql.priz_base.model.RefreshTokenModel;
-import com.priz.base.domain.mysql.priz_base.model.UserModel;
+import com.priz.base.domain.mysql_priz_base.model.FileModel;
+import com.priz.base.domain.mysql_priz_base.model.RefreshTokenModel;
+import com.priz.base.domain.mysql_priz_base.model.UserModel;
 import com.priz.common.security.SecurityContext;
 
 import java.time.Instant;

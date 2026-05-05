@@ -47,6 +47,14 @@ public class ApiResponse<T> {
                 .build();
     }
 
+    public static <T> ApiResponse<T> accepted(T data) {
+        return ApiResponse.<T>builder()
+                .status(202)
+                .message("Accepted")
+                .data(data)
+                .build();
+    }
+
     public static <T> ApiResponse<T> error(int status, String message) {
         return ApiResponse.<T>builder()
                 .status(status)

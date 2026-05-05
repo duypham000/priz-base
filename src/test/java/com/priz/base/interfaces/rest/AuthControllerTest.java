@@ -2,6 +2,7 @@ package com.priz.base.interfaces.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.priz.base.application.features.auth.AuthService;
+import com.priz.base.application.features.auth.IntrospectService;
 import com.priz.base.application.features.auth.dto.AuthResponse;
 import com.priz.base.application.features.auth.dto.LoginRequest;
 import com.priz.base.application.features.auth.dto.RegisterRequest;
@@ -29,6 +30,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private IntrospectService introspectService;
 
     @Test
     void register_should_return201_withAuthResponse() throws Exception {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
@@ -20,11 +21,8 @@ import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.util.backoff.ExponentialBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,14 +54,6 @@ public class KafkaConfig {
     }
 
     @Bean
-    public NewTopic fileUploadDltTopic() {
-        return TopicBuilder.name(topicProperties.getTopic("file-upload-dlt"))
-                .partitions(1)
-                .replicas(topicProperties.getReplicas())
-                .build();
-    }
-
-    @Bean
     public NewTopic notificationTopic() {
         return TopicBuilder.name(topicProperties.getTopic("notification"))
                 .partitions(topicProperties.getPartitions("notification"))
@@ -72,9 +62,9 @@ public class KafkaConfig {
     }
 
     @Bean
-    public NewTopic notificationDltTopic() {
-        return TopicBuilder.name(topicProperties.getTopic("notification-dlt"))
-                .partitions(1)
+    public NewTopic fileProcessTopic() {
+        return TopicBuilder.name(topicProperties.getTopic("file-process"))
+                .partitions(topicProperties.getPartitions("file-process"))
                 .replicas(topicProperties.getReplicas())
                 .build();
     }
@@ -101,6 +91,7 @@ public class KafkaConfig {
     }
 
     @Bean
+    @Primary
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
@@ -141,7 +132,6 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(3);
-        factory.setCommonErrorHandler(defaultErrorHandler());
         return factory;
     }
 
@@ -153,16 +143,16 @@ public class KafkaConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setBatchListener(true);
         factory.setConcurrency(2);
-        factory.setCommonErrorHandler(defaultErrorHandler());
         return factory;
     }
 
     @Bean
-    public DefaultErrorHandler defaultErrorHandler() {
-        ExponentialBackOff backOff = new ExponentialBackOff(1000L, 2.0);
-        backOff.setMaxAttempts(3);
-        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate(),
-                (record, ex) -> new org.apache.kafka.common.TopicPartition(record.topic() + ".DLT", 0));
-        return new DefaultErrorHandler(recoverer, backOff);
+    public ConcurrentKafkaListenerContainerFactory<String, Object> retryableContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+        factory.setConcurrency(3);
+        return factory;
     }
 }

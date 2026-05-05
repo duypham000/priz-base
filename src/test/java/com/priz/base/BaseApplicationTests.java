@@ -1,12 +1,9 @@
 package com.priz.base;
 
+import com.priz.base.interfaces.kafka.BaseKafkaIT;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
-@ActiveProfiles("test")
-class BaseApplicationTests {
+class BaseApplicationTests extends BaseKafkaIT {
 
 	@Test
 	void contextLoads() {

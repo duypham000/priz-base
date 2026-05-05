@@ -1,8 +1,7 @@
 package com.priz.base.infrastructure.kafka.producer;
 
-import com.priz.base.application.features.files.event.FileUploadEvent;
+import com.priz.base.application.features.files.event.FileProcessEvent;
 import com.priz.base.config.kafka.KafkaTopicProperties;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -15,16 +14,20 @@ import java.time.Instant;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class FileUploadEventProducer {
+public class FileProcessEventProducer {
 
-    @Qualifier("transactionalKafkaTemplate")
     private final KafkaTemplate<String, Object> transactionalKafkaTemplate;
-
     private final KafkaTopicProperties topicProperties;
 
-    public void publish(FileUploadEvent event) {
-        String topic = topicProperties.getTopic("file-upload");
+    public FileProcessEventProducer(
+            @Qualifier("transactionalKafkaTemplate") KafkaTemplate<String, Object> transactionalKafkaTemplate,
+            KafkaTopicProperties topicProperties) {
+        this.transactionalKafkaTemplate = transactionalKafkaTemplate;
+        this.topicProperties = topicProperties;
+    }
+
+    public void publish(FileProcessEvent event) {
+        String topic = topicProperties.getTopic("file-process");
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(topic, event.getFileId(), event);
         addHeaders(record, event);
@@ -33,11 +36,11 @@ public class FileUploadEventProducer {
             var future = ops.send(record);
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
-                    log.error("Failed to publish FileUploadEvent jobId={} fileId={}: {}",
-                            event.getJobId(), event.getFileId(), ex.getMessage());
+                    log.error("Failed to publish FileProcessEvent operation={} fileId={}: {}",
+                            event.getOperation(), event.getFileId(), ex.getMessage());
                 } else {
-                    log.info("Published FileUploadEvent jobId={} fileId={} partition={} offset={}",
-                            event.getJobId(), event.getFileId(),
+                    log.info("Published FileProcessEvent operation={} fileId={} partition={} offset={}",
+                            event.getOperation(), event.getFileId(),
                             result.getRecordMetadata().partition(),
                             result.getRecordMetadata().offset());
                 }
@@ -46,8 +49,9 @@ public class FileUploadEventProducer {
         });
     }
 
-    private void addHeaders(ProducerRecord<String, Object> record, FileUploadEvent event) {
-        record.headers().add(new RecordHeader("eventType", "FILE_UPLOAD".getBytes(StandardCharsets.UTF_8)));
+    private void addHeaders(ProducerRecord<String, Object> record, FileProcessEvent event) {
+        record.headers().add(new RecordHeader("eventType", "FILE_PROCESS".getBytes(StandardCharsets.UTF_8)));
+        record.headers().add(new RecordHeader("operation", event.getOperation().name().getBytes(StandardCharsets.UTF_8)));
         record.headers().add(new RecordHeader("timestamp", Instant.now().toString().getBytes(StandardCharsets.UTF_8)));
         if (event.getTraceId() != null) {
             record.headers().add(new RecordHeader("traceId", event.getTraceId().getBytes(StandardCharsets.UTF_8)));

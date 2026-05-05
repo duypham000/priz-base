@@ -4,13 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.priz.base.application.features.notification.event.NotificationEvent;
 import com.priz.base.application.integration.discord.DiscordService;
 import com.priz.base.application.integration.gmail.GmailService;
-import com.priz.base.domain.mysql.priz_base.model.NotificationModel;
-import com.priz.base.domain.mysql.priz_base.repository.NotificationRepository;
+import com.priz.base.domain.mysql_priz_base.model.NotificationModel;
+import com.priz.base.domain.mysql_priz_base.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.kafka.annotation.BackOff;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.annotation.TopicPartition;
+import org.springframework.kafka.retrytopic.DltStrategy;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -33,39 +37,81 @@ public class NotificationEventConsumer {
     private final ObjectMapper objectMapper;
 
     /**
-     * HIGH priority — partition 0 — single-record, lowest latency.
+     * HIGH priority — partition 0 — single-record, non-blocking retry.
      */
+    @RetryableTopic(
+            attempts = "4",
+            backOff = @BackOff(delay = 1000L, multiplier = 2.0),
+            autoCreateTopics = "true",
+            dltTopicSuffix = "-dlt",
+            dltStrategy = DltStrategy.FAIL_ON_ERROR,
+            include = {RuntimeException.class},
+            listenerContainerFactory = "retryableContainerFactory"
+    )
     @KafkaListener(
             topicPartitions = @TopicPartition(
                     topic = "${app.kafka.topics.notification}",
                     partitions = {"0"}
             ),
             groupId = "priz-notification-high-group",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "retryableContainerFactory"
     )
     @Transactional
     public void consumeHighPriority(
             @Payload String payload,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset,
-            @Header(name = "traceId", required = false) byte[] traceIdBytes,
-            Acknowledgment acknowledgment) {
+            @Header(name = "traceId", required = false) byte[] traceIdBytes) {
 
         setupMdc(traceIdBytes, partition, offset);
         try {
             NotificationEvent event = objectMapper.readValue(payload, NotificationEvent.class);
             log.info("HIGH priority notification id={} channel={}", event.getNotificationId(), event.getChannel());
-            processAndAck(event, acknowledgment);
+            dispatch(event);
+            markSent(event.getNotificationId());
         } catch (IOException e) {
+            // Poison pill — unparseable payload, no retry
             log.error("Failed to parse notification payload: {}", e.getMessage());
-            acknowledgment.acknowledge();
+        } catch (Exception e) {
+            log.error("Failed to send notification: {}", e.getMessage());
+            markFailed(e.getMessage(), e.getMessage());
+            throw new RuntimeException(e);
         } finally {
             clearMdc();
         }
     }
 
+    @DltHandler
+    @Transactional
+    public void handleDlt(
+            @Payload String payload,
+            @Header(name = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage,
+            @Header(name = KafkaHeaders.ORIGINAL_TOPIC, required = false) byte[] originalTopicBytes,
+            @Header(name = KafkaHeaders.ORIGINAL_PARTITION, required = false) Integer originalPartition,
+            @Header(name = KafkaHeaders.ORIGINAL_OFFSET, required = false) Long originalOffset) {
+
+        log.error("Notification DLT — originalTopic={} partition={} offset={} error={}",
+                originalTopicBytes != null ? new String(originalTopicBytes) : "unknown",
+                originalPartition, originalOffset, exceptionMessage);
+
+        try {
+            NotificationEvent event = objectMapper.readValue(payload, NotificationEvent.class);
+
+            notificationRepository.findById(event.getNotificationId()).ifPresent(n -> {
+                n.setStatus(NotificationModel.Status.FAILED);
+                n.setErrorMessage(truncate(exceptionMessage, 1000));
+                notificationRepository.save(n);
+                log.error("Marked notification FAILED id={} channel={}", n.getId(), n.getChannel());
+            });
+
+        } catch (IOException e) {
+            log.error("Could not parse Notification DLT payload: {}", e.getMessage());
+        }
+    }
+
     /**
      * NORMAL + LOW priority — partitions 1 & 2 — batch processing for throughput.
+     * @RetryableTopic không hỗ trợ batch listeners, dùng per-item error handling.
      */
     @KafkaListener(
             topicPartitions = @TopicPartition(
@@ -102,18 +148,6 @@ public class NotificationEventConsumer {
             }
         }
         acknowledgment.acknowledge();
-    }
-
-    private void processAndAck(NotificationEvent event, Acknowledgment acknowledgment) {
-        try {
-            dispatch(event);
-            markSent(event.getNotificationId());
-            acknowledgment.acknowledge();
-        } catch (Exception e) {
-            log.error("Failed to send notification id={}: {}", event.getNotificationId(), e.getMessage());
-            markFailed(event.getNotificationId(), e.getMessage());
-            throw new RuntimeException(e);
-        }
     }
 
     private void dispatch(NotificationEvent event) {
@@ -172,5 +206,10 @@ public class NotificationEventConsumer {
         MDC.remove("traceId");
         MDC.remove("kafkaPartition");
         MDC.remove("kafkaOffset");
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null) return null;
+        return value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 }

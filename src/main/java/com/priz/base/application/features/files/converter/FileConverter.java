@@ -1,7 +1,7 @@
 package com.priz.base.application.features.files.converter;
 
 import com.priz.base.application.features.files.dto.FileDetailResponse;
-import com.priz.base.domain.mysql.priz_base.model.FileModel;
+import com.priz.base.domain.mysql_priz_base.model.FileModel;
 
 public final class FileConverter {
 
