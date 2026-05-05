@@ -43,9 +43,6 @@ public class FileModel extends BaseModel {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "content", columnDefinition = "TEXT")
-    private String content;
-
     @Column(name = "checksum", length = 64)
     private String checksum;
 

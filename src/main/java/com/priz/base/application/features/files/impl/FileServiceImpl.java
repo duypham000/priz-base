@@ -212,9 +212,6 @@ public class FileServiceImpl implements FileService {
         if (request.getDescription() != null) {
             fileModel.setDescription(request.getDescription());
         }
-        if (request.getContent() != null) {
-            fileModel.setContent(request.getContent());
-        }
         fileRepository.save(fileModel);
 
         FileProcessEvent event = FileProcessEvent.builder()
