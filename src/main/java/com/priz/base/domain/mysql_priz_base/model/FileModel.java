@@ -1,6 +1,7 @@
 package com.priz.base.domain.mysql_priz_base.model;
 
 import com.priz.common.admin.annotation.AdminManaged;
+import com.priz.common.admin.annotation.AdminRelation;
 import com.priz.base.common.model.BaseModel;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,8 +38,12 @@ public class FileModel extends BaseModel {
     @Column(name = "content_type", length = 100)
     private String contentType;
 
+    @AdminRelation(name = "user", targetResource = "users", displayLabel = "User")
     @Column(name = "user_id", nullable = false, length = 36)
     private String userId;
+
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
 
     @Column(name = "description", length = 500)
     private String description;
