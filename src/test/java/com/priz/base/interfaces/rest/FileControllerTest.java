@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.priz.base.application.features.files.FileSearchService;
 import com.priz.base.application.features.files.FileService;
 import com.priz.base.application.features.files.dto.*;
+import com.priz.common.security.jwt.JwtService;
 import com.priz.interfaces.admin.dto.PageResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,8 @@ class FileControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @MockitoBean
+    private JwtService jwtService;
     @MockitoBean
     private FileService fileService;
 

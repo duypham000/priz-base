@@ -7,6 +7,7 @@ import com.priz.base.application.features.auth.dto.LoginRequest;
 import com.priz.base.application.features.auth.dto.RefreshTokenRequest;
 import com.priz.base.application.features.auth.dto.RegisterRequest;
 import com.priz.base.application.features.auth.dto.ResetPasswordRequest;
+import com.priz.base.application.features.permission.UserPermissionService;
 import com.priz.common.exception.BusinessException;
 import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.common.exception.UnauthorizedException;
@@ -37,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final UserPermissionService userPermissionService;
 
     // =============================================
     // REGISTER
@@ -197,11 +199,13 @@ public class AuthServiceImpl implements AuthService {
     // PRIVATE HELPER
     // =============================================
     private AuthResponse buildAuthResponse(UserModel user, String deviceInfo) {
+        String perms = userPermissionService.getEncodedPermissions(user.getId());
         String accessTokenValue = jwtService.generateAccessToken(
                 user.getId(),
                 user.getEmail(),
                 user.getUsername(),
-                user.getRole().name()
+                user.getRole().name(),
+                perms.isBlank() ? null : perms
         );
 
         AccessTokenModel accessToken = AccessTokenModel.builder()

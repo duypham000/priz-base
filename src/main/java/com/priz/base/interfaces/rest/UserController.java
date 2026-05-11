@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "User management endpoints")
-@Secured
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
+    @Secured
     @GetMapping("/me")
     @Operation(summary = "Get current user detail")
     public ResponseEntity<ApiResponse<UserDetailResponse>> getMyProfile() {
@@ -34,6 +34,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @Secured
     @PutMapping("/me")
     @Operation(summary = "Update current user profile")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateProfile(
@@ -42,6 +43,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @Secured
     @PutMapping("/me/password")
     @Operation(summary = "Change current user password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
@@ -50,6 +52,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 
+    @Secured
     @DeleteMapping("/me")
     @Operation(summary = "Delete (deactivate) current user account")
     public ResponseEntity<ApiResponse<Void>> deleteAccount() {

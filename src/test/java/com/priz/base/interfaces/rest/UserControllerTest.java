@@ -6,6 +6,7 @@ import com.priz.base.application.features.users.dto.ChangePasswordRequest;
 import com.priz.base.application.features.users.dto.UpdateProfileRequest;
 import com.priz.base.application.features.users.dto.UserDetailResponse;
 import com.priz.base.testutil.TestFixtures;
+import com.priz.common.security.jwt.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -28,6 +29,8 @@ class UserControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @MockitoBean
+    private JwtService jwtService;
     @MockitoBean
     private UserService userService;
 

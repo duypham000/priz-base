@@ -8,6 +8,7 @@ import com.priz.base.application.features.auth.dto.LoginRequest;
 import com.priz.base.application.features.auth.dto.RegisterRequest;
 import com.priz.common.exception.UnauthorizedException;
 import com.priz.base.testutil.TestFixtures;
+import com.priz.common.security.jwt.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -28,6 +29,8 @@ class AuthControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @MockitoBean
+    private JwtService jwtService;
     @MockitoBean
     private AuthService authService;
 

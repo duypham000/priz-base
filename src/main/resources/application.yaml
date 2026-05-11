@@ -38,8 +38,13 @@ springdoc:
     path: /swagger-ui.html
 
 jwt:
-  access-token-expiration: 3600000    # 1 hour in ms
+  access-token-expiration: 900000     # 15 minutes in ms
   refresh-token-expiration: 604800000 # 7 days in ms
+
+priz:
+  security:
+    api-key:
+      secret-encryption-key: ${API_KEY_SECRET_ENC_KEY:change-me-in-production-min-32chars}
 
 file:
   upload-dir: ${UPLOAD_DIR:./uploads}
@@ -55,6 +60,8 @@ management:
       show-details: always
 
 app:
+  permission:
+    auto-discovery: true
   kafka:
     topics:
       file-upload: file-upload-events

@@ -1,6 +1,7 @@
 package com.priz.base.application.features.auth.impl;
 
 import com.priz.base.application.features.auth.dto.*;
+import com.priz.base.application.features.permission.UserPermissionService;
 import com.priz.common.exception.BusinessException;
 import com.priz.common.exception.ResourceNotFoundException;
 import com.priz.common.exception.UnauthorizedException;
@@ -44,6 +45,9 @@ class AuthServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private UserPermissionService userPermissionService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -60,7 +64,8 @@ class AuthServiceImplTest {
         when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
         when(passwordEncoder.encode(request.getPassword())).thenReturn(TestFixtures.TEST_ENCODED_PASSWORD);
         when(userRepository.save(any(UserModel.class))).thenReturn(savedUser);
-        when(jwtService.generateAccessToken(anyString(), anyString(), anyString(), anyString()))
+        when(userPermissionService.getEncodedPermissions(anyString())).thenReturn("");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), any()))
                 .thenReturn(TestFixtures.TEST_ACCESS_TOKEN);
         when(jwtService.generateRefreshTokenValue()).thenReturn(TestFixtures.TEST_REFRESH_TOKEN);
         when(jwtService.getRefreshTokenExpirationMs()).thenReturn(604800000L);
@@ -106,7 +111,8 @@ class AuthServiceImplTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.getPassword(), user.getPassword())).thenReturn(true);
-        when(jwtService.generateAccessToken(anyString(), anyString(), anyString(), anyString()))
+        when(userPermissionService.getEncodedPermissions(anyString())).thenReturn("");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), any()))
                 .thenReturn(TestFixtures.TEST_ACCESS_TOKEN);
         when(jwtService.generateRefreshTokenValue()).thenReturn(TestFixtures.TEST_REFRESH_TOKEN);
         when(jwtService.getRefreshTokenExpirationMs()).thenReturn(604800000L);
@@ -186,7 +192,8 @@ class AuthServiceImplTest {
 
         when(refreshTokenRepository.findByToken(storedToken.getToken())).thenReturn(Optional.of(storedToken));
         when(userRepository.findById(TestFixtures.TEST_USER_ID)).thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(anyString(), anyString(), anyString(), anyString()))
+        when(userPermissionService.getEncodedPermissions(anyString())).thenReturn("");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), any()))
                 .thenReturn("new-access-token");
         when(jwtService.generateRefreshTokenValue()).thenReturn("new-refresh-token");
         when(jwtService.getRefreshTokenExpirationMs()).thenReturn(604800000L);

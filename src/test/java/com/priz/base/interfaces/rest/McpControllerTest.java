@@ -1,10 +1,10 @@
 package com.priz.base.interfaces.rest;
 
 import com.priz.base.application.mcp.McpDispatcher;
+import com.priz.common.security.jwt.JwtService;
 import com.priz.base.application.mcp.dto.McpError;
 import com.priz.base.application.mcp.dto.McpRequest;
 import com.priz.base.application.mcp.dto.McpResponse;
-
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +26,8 @@ class McpControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    private JwtService jwtService;
     @MockitoBean
     private McpDispatcher mcpDispatcher;
 

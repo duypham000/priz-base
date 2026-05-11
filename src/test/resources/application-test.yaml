@@ -19,6 +19,11 @@ jwt:
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
 
+priz:
+  security:
+    api-key:
+      secret-encryption-key: test-aes-encryption-key-min-32chars!!
+
 file:
   upload-dir: ./test-uploads
 
