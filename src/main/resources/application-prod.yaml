@@ -40,10 +40,6 @@ gmail:
 kafka:
   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
-logstash:
-  host: ${LOGSTASH_HOST:localhost}
-  port: ${LOGSTASH_PORT:5044}
-
 logging:
   level:
     root: INFO

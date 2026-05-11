@@ -10,8 +10,39 @@ filebeat.inputs:
         add_error_key: true
         overwrite_keys: true
 
-output.logstash:
-  hosts: ["logstash:5044"]
+processors:
+  - add_fields:
+      target: ''
+      fields:
+        service.name: priz-base
+        event.dataset: priz-base.application
+  - rename:
+      fields:
+        - from: level
+          to: log.level
+        - from: logger_name
+          to: log.logger
+        - from: thread_name
+          to: process.thread.name
+      ignore_missing: true
+      fail_on_error: false
+  - drop_fields:
+      fields: ['@version']
+      ignore_missing: true
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "logs-priz-base-%{+yyyy.MM.dd}"
+
+setup.template.enabled: true
+setup.template.name: "logs-priz-base"
+setup.template.pattern: "logs-priz-base-*"
+setup.template.overwrite: true
+setup.template.settings:
+  index:
+    number_of_shards: 1
+    number_of_replicas: 0
+setup.ilm.enabled: false
 
 logging.level: info
 logging.to_files: false

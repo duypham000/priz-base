@@ -1,6 +1,6 @@
 services:
 
-  # ── Kafka (KRaft — Bitnami, no Zookeeper) ────────────────────────────────────
+  # ── Kafka (KRaft — no Zookeeper) ──────────────────────────────────────────────
   kafka:
     image: apache/kafka:3.9.0
     container_name: priz-kafka
@@ -11,14 +11,25 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
-      
+
       # Listeners
       KAFKA_LISTENERS: 'PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:9093'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      
+
+      # Heap — giới hạn JVM, để OS page cache làm disk buffer
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx400m"
+
+      # Disk buffer — flush định kỳ, dùng disk làm buffer chính
+      KAFKA_LOG_FLUSH_INTERVAL_MESSAGES: 10000
+      KAFKA_LOG_FLUSH_INTERVAL_MS: 1000
+      KAFKA_LOG_SEGMENT_BYTES: 536870912      # 512MB per segment
+      KAFKA_LOG_RETENTION_BYTES: 5368709120   # 5GB max per partition
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+
       # Misc
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -35,114 +46,6 @@ services:
       retries: 5
       start_period: 15s
 
-  # ── Schema Registry ──────────────────────────────────────────────────────────
-  schema-registry:
-    image: confluentinc/cp-schema-registry:7.9.0
-    container_name: priz-schema-registry
-    ports:
-      - "8081:8081"
-    environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
-      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-    depends_on:
-      kafka:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-
-  # ── Kafka Connect ─────────────────────────────────────────────────────────────
-  kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.9.0
-    container_name: priz-kafka-connect
-    ports:
-      - "8084:8083"   # 8083 đã dùng cho Spring Boot REST
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      CONNECT_GROUP_ID: priz-connect-group
-      CONNECT_CONFIG_STORAGE_TOPIC: priz-connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: priz-connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: priz-connect-status
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
-    depends_on:
-      schema-registry:
-        condition: service_healthy
-
-  # ── ksqlDB Server ─────────────────────────────────────────────────────────────
-  ksqldb-server:
-    image: confluentinc/cp-ksqldb-server:7.9.0
-    container_name: priz-ksqldb
-    ports:
-      - "8088:8088"
-    environment:
-      KSQL_BOOTSTRAP_SERVERS: kafka:29092
-      KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
-      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
-    depends_on:
-      schema-registry:
-        condition: service_healthy
-
-  # ── ksqlDB CLI ────────────────────────────────────────────────────────────────
-  ksqldb-cli:
-    image: confluentinc/cp-ksqldb-cli:7.9.0
-    container_name: priz-ksqldb-cli
-    depends_on:
-      - ksqldb-server
-    entrypoint: /bin/sh
-    tty: true
-
-  # ── Conduktor DB (PostgreSQL metadata store) ──────────────────────────────────
-  conduktor-db:
-    image: postgres:16
-    container_name: priz-conduktor-db
-    environment:
-      POSTGRES_DB: conduktor_db
-      POSTGRES_USER: conduktor
-      POSTGRES_PASSWORD: conduktorpass
-    volumes:
-      - conduktor_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U conduktor -d conduktor_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── Conduktor Console (thay kafka-ui) ─────────────────────────────────────────
-  conduktor-console:
-    image: conduktor/conduktor-console:1.28.0
-    container_name: priz-conduktor
-    ports:
-      - "8091:8080"   # http://localhost:8091 — login: admin@priz.local / adminadmin
-    environment:
-      CDK_ORGANIZATION_NAME: priz-local
-      CDK_ADMIN_EMAIL: admin@priz.local
-      CDK_ADMIN_PASSWORD: adminadmin
-      CDK_DATABASE_URL: "postgresql://conduktor:conduktorpass@conduktor-db:5432/conduktor_db"
-      CDK_CLUSTERS_0_ID: priz-local
-      CDK_CLUSTERS_0_NAME: priz-local
-      CDK_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      CDK_CLUSTERS_0_SCHEMAREGISTRY_URL: http://schema-registry:8081
-      CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: priz-connect
-      CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: http://kafka-connect:8083
-    depends_on:
-      kafka:
-        condition: service_healthy
-      conduktor-db:
-        condition: service_healthy
-
   # ── Elasticsearch ─────────────────────────────────────────────────────────────
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.26
@@ -150,7 +53,8 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.ml.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx1g
     ports:
       - "9200:9200"
     volumes:
@@ -160,22 +64,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-  # ── Logstash ──────────────────────────────────────────────────────────────────
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.26
-    container_name: priz-logstash
-    ports:
-      - "5044:5044"
-      - "9600:9600"
-    volumes:
-      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
-      - ./elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-    environment:
-      - LS_JAVA_OPTS=-Xmx256m -Xms256m
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
 
   # ── Kibana ────────────────────────────────────────────────────────────────────
   kibana:
@@ -199,9 +87,9 @@ services:
       - ./elk/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - ./logs:/usr/share/filebeat/logs:ro
     depends_on:
-      - logstash
+      elasticsearch:
+        condition: service_healthy
 
 volumes:
   kafka_data:
   esdata_v7:
-  conduktor_db_data:
